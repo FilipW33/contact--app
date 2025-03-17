@@ -1,9 +1,11 @@
 import sqlite3
 import re
 
-#tworzenie bazy danych
+
+#database creation
 connection=sqlite3.connect('kontakty.db')
-#tworzenie rekordów w bazie danych, w przypadku telefonu i maila zwróci błąd w  przypadku duplikacji
+
+#creation of records in database, in case of phone and email will return error in case of duplication
 def create_table():
     with connection:
         connection.execute("""CREATE TABLE IF NOT EXISTS kontakty(
@@ -12,37 +14,38 @@ def create_table():
             surname TEXT NOT NULL,
             email TEXT NOT NULL UNIQUE,
             phone TEXT NOT NULL UNIQUE)""")
-#funkcja dodania kontaktu, ze sprawdzaniem maili i telefonu
+        
+#function of adding a contact, with checking emails and phone
 def add_contact(name,surname,email,phone):
     if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
-        raise ValueError("Nieprawidłowy format email!")
+        raise ValueError("Incorrect email format!")
     if not re.match(r"^\+?\d{7,15}$",phone):
-        raise ValueError("Nieprawidłowy format numeru telefonu!")
+        raise ValueError("Incorrect phone number format!")
     with connection:
         connection.execute("""INSERT INTO kontakty(name,surname,email,phone)VALUES(?,?,?,?)""",
                            (name,surname,email,phone))
-#wyświetlanie kontaktów
+#showing contacts
 def get_contacts():    
     with connection:
-        return connection.execute("""SELECT * FROM kontakty""").fetchall() #fetchall pobiera wszystkie wyniki zapytania alternatywa fetchmany(np.5) zwróci tylko 5 wierszy
+        return connection.execute("""SELECT * FROM kontakty""").fetchall() #fetchall retrieves all query results alternative fetchmany(e.g.5) will return only 5 rows
     
-#usuwanie kontaku po numerze id (najbezpieczniej gdyż id jest unikalny)
-#jedyny minus jak usuniemy id=2 i dodamy kolejny kontakt to będzie miał id numer 3 a nie 2
+#remove contact by id number (safest because id is unique)
+#the only downside if we remove id=2 and add another contact it will have id number 3 not 2
 def delete_contact(contact_id):
     with connection:
         connection.execute("""DELETE FROM kontakty WHERE id = ?""",(contact_id,))
 
-#funckja updatu kontaktu
+#update contact function
 def update_contact(contact_id,name=None,surname=None,email=None,phone=None):
     if email and not re.match(r"[^@]+@[^@]+\.[^@]+", email):
-        raise ValueError("Nieprawidłowy format email!")
+        raise ValueError("Incorrect email format!")
     if phone and not re.match(r"^\+?\d{7,15}$", phone):
-        raise ValueError("Nieprawidłowy format numeru telefonu!")
+        raise ValueError("Incorrect phone number format!")
     with connection:
         contact=connection.execute("""SELECT * FROM kontakty WHERE id = ?""",(contact_id,)).fetchone()
         if not contact:
-            raise ValueError("Kontakt o podanym ID nie istnieje.")
-        #możliwość zmiany przez użytkownika tylko tych danych które chce a nie wszystkich 
+            raise ValueError("The contact with the specified ID does not exist.")
+        #the ability for the user to change only the data they want and not all of it 
         name=name or contact[1]
         surname=surname or contact[2]
         email=email or contact[3]

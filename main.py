@@ -1,17 +1,18 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
-import com  #import biblioteki, gdzie jest logika aplikacji
+import com  #import library, where the application logic is
 
-#inicjalizacja bazy danych
+#database initialization
 com.create_table()
 
-#podczas ponownego uruchomienia wczytuje kontakty już zapisane wcześniej
+#restart loads contacts already saved earlier
 def refresh_contacts():
     for item in contact_list.get_children():
         contact_list.delete(item)
     for contact in com.get_contacts():
         contact_list.insert("", "end", values=contact)
-# pokazywanie kontaktów i ustawienie głównego okna
+
+# showing contacts and setting the main window
 def show_form(title, fields, defaults=None, on_save=None):
     form_window = tk.Toplevel(root)
     form_window.title(title)
@@ -31,79 +32,78 @@ def show_form(title, fields, defaults=None, on_save=None):
             data={field: entry.get() for field,entry in entries.items()}
             on_save(data)
         form_window.destroy()
-    tk.Button(form_window,text="Zapisz",command=save).pack(pady=10)
+    tk.Button(form_window,text="Save",command=save).pack(pady=10)
 
-#dodanie nowego kontaktu
+#adding a new contact
 def add_contact():
     def save_contact(data):
         try:
-            com.add_contact(data["Imię"],data["Nazwisko"],data["Email"],data["Telefon"])
+            com.add_contact(data["Name"],data["Surname"],data["Email"],data["Phone"])
             refresh_contacts()
-            messagebox.showinfo("Sukces","Kontakt dodany pomyślnie!")
+            messagebox.showinfo("Sukces","Contact added successfully!")
         except ValueError as e:
             messagebox.showerror("Błąd",str(e))
-    show_form("Dodaj kontakt",["Imię","Nazwisko","Email","Telefon"],on_save=save_contact)
+    show_form("Add contact",["Name","Surname","Email","Phone"],on_save=save_contact)
 
-#edycja kontaktów
+#edition of contacts
 def edit_contact():
     selected_item = contact_list.selection()
     if not selected_item:
-        messagebox.showerror("Błąd","Nie wybrano kontaktu do edycji.")
+        messagebox.showerror("Error”, ”No contact selected for editing.")
         return
     contact_id=contact_list.item(selected_item,"values")[0]
     current_values=contact_list.item(selected_item,"values")[1:]
     def update_contact(data):
         try:
-            com.update_contact(contact_id,data["Imię"],data["Nazwisko"],data["Email"],data["Telefon"])
+            com.update_contact(contact_id,data["Name"],data["Surname"],data["Email"],data["Phone"])
             refresh_contacts()
-            messagebox.showinfo("Kontakt zaktualizowany pomyślnie!")
+            messagebox.showinfo("Contact updated successfully!")
         except ValueError as e:
-            messagebox.showerror("Błąd",str(e))
-    show_form("Edytuj kontakt",["Imię","Nazwisko","Email","Telefon"],defaults=current_values,on_save=update_contact)
+            messagebox.showerror("Error",str(e))
+    show_form("Edit contact",["Name","Surname","Email","Phone"],defaults=current_values,on_save=update_contact)
 
-#usuwanie kontaktu
+#removal of contact
 def delete_contact():
     selected_item = contact_list.selection()
     if selected_item:
         contact_id = contact_list.item(selected_item, "values")[0]
         com.delete_contact(contact_id)
         refresh_contacts()
-        messagebox.showinfo("Sukces", "Kontakt usunięty pomyślnie!")
+        messagebox.showinfo("Success”, ”Contact removed successfully!")
     else:
-        messagebox.showerror("Błąd", "Nie wybrano kontaktu do usunięcia.")
+        messagebox.showerror("Error”, ”No contact selected for deletion.")
 
-#tworzenie głównego okna
+#creating the main window
 root = tk.Tk()
-root.title("Zarządzanie kontaktami")
+root.title("Contact management")
 root.geometry("800x600")
 
-#lista kontaktów
-
-columns = ("ID","Imię","Nazwisko","Email","Telefon")
+#contact list
+columns = ("ID","Name","Surname","Email","Phone")
 contact_list = ttk.Treeview(root,columns=columns,show="headings")
-#szerokość kolumny ID
+#width of column ID
 for col in columns:
     contact_list.heading(col,text=col)
 contact_list.column("ID",width=10)
-#szerokość kolmun prócz ID
+#width for other columns than ID
 for col in columns[1:]:
     contact_list.column(col,width=150)
 contact_list.pack(fill=tk.BOTH,expand=True,padx=10,pady=10)
-#centrowanie tekstu
+#centering text
 for col in columns:
     contact_list.heading(col,anchor="center")
     contact_list.column(col,anchor="center")
 
-#przyciski
+#buttons
 btn_frame=tk.Frame(root)
 btn_frame.pack(fill=tk.X)
 buttons=[
-    ("Dodaj kontakt",add_contact),
-    ("Edytuj kontakt",edit_contact),
-    ("Usuń kontakt",delete_contact),]
+    ("Add contact",add_contact),
+    ("Edite contact",edit_contact),
+    ("Delete contact",delete_contact),]
 for text,command in buttons:
     tk.Button(btn_frame,text=text,command=command).pack(side=tk.LEFT,padx=5,pady=5)
 
-#wczytywanie kontaktów
+#loading contacts
 refresh_contacts()
 root.mainloop()
